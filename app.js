@@ -79,6 +79,21 @@ function positionCloud() {
   cloud.style.setProperty("--cloud-y", `${target.offsetTop}px`);
 }
 
+const reducedScrollMotion = matchMedia("(prefers-reduced-motion: reduce)");
+const scrollReveal = typeof IntersectionObserver === "function" && typeof Element.prototype.animate === "function"
+  ? new IntersectionObserver(entries => {
+    for (const {target, isIntersecting} of entries) {
+      if (!isIntersecting) continue;
+      scrollReveal.unobserve(target);
+      if (reducedScrollMotion.matches || target.matches(":focus-within")) continue;
+      target.animate([
+        {opacity:.25, transform:"translateY(12px)"},
+        {opacity:1, transform:"translateY(0)"}
+      ], {duration:480, easing:"cubic-bezier(.2,.7,.3,1)"});
+    }
+  }, {threshold:.12})
+  : null;
+
 function render() {
   const buttons = byId("category-list").querySelectorAll("[data-category]");
   for (const button of buttons) {
@@ -87,11 +102,14 @@ function render() {
   positionCloud();
   const products = catalog.filter(item => !category || item.category === category);
   byId("result").textContent = `${products.length} ${products.length === 1 ? "peça" : "peças"}${usingDemo ? " · Catálogo de demonstração" : ""}`;
-  byId("products").innerHTML = products.map(({id, name, image, price, colorHex, variants}) => `
+  const grid = byId("products");
+  for (const card of grid.children) scrollReveal?.unobserve(card);
+  grid.innerHTML = products.map(({id, name, image, price, colorHex, variants}) => `
     <article class="product">
     <button type="button" class="product-image" data-product="${id}" aria-label="Ver ${escapeHtml(name)}"><img src="${escapeHtml(image)}" width="430" height="430" alt="" loading="lazy"></button>
     <div class="product-body"><p class="color"><i style="--swatch:${colorHex}"></i>${escapeHtml(variants[0].color)}</p>
     <h3>${escapeHtml(name)}</h3><div class="price-row"><strong>${money(price)}</strong><button class="plus" type="button" data-product="${id}" aria-label="Escolher ${escapeHtml(name)}">+</button></div></div></article>`).join("");
+  for (const card of grid.children) scrollReveal?.observe(card);
 }
 
 function openDialog(content) {
@@ -184,4 +202,7 @@ byId("category-list").insertAdjacentHTML("beforeend", categories.map(([id, label
   </button>`).join(""));
 saveCart();
 render();
+for (const section of document.querySelectorAll("#categorias, #vitrine .section-head, .footer-grid, .footer-bottom")) {
+  scrollReveal?.observe(section);
+}
 new ResizeObserver(positionCloud).observe(byId("category-list"));
