@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Vitrine de moda infantil. Escolha as peças, cores e tamanhos e leve sua seleção para o WhatsApp.">
+<link rel="icon" type="image/svg+xml" href="logo.svg"><title>Moda Infantil | Vitrine</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Pular para o conteúdo</a>
+<main id="main">
+<section class="hero-banner" id="inicio" aria-labelledby="hero-title">
+<header class="wrap header">
+<a class="brand" href="#inicio"><img class="brand-mark" src="logo.svg" width="33" height="33" alt=""> moda<strong>infantil</strong></a>
+<nav aria-label="Navegação principal"><a href="#inicio">Início</a><a href="#categorias">Categorias</a><a href="#vitrine">Vitrine</a></nav>
+<button class="bag" id="bag" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l2 13H3L5 8Zm4 2V6a3 3 0 0 1 6 0v4"/></svg> Sacola <span id="count">0</span></button>
+</header>
+<h1 class="sr" id="hero-title">Moda Infantil</h1>
+<picture>
+<source media="(max-width: 630px)" srcset="hero-mobile.webp" width="768" height="1376">
+<img src="hero-desktop.webp" width="1376" height="768" alt="Menino de moletom amarelo em um cenário com planetas e foguetes" fetchpriority="high">
+</picture>
+<a class="hero-link" href="#vitrine"><span class="sr">Ver a vitrine de moda infantil</span></a>
+</section>
+<div class="wrap catalog-wrap">
+<section id="categorias" class="section"><h2>Encontre por categoria</h2><div class="categories" id="category-list"><img class="category-cloud" src="clouds.webp" width="1180" height="372" alt=""></div></section>
+<section id="vitrine" class="section">
+<div class="section-head"><div><h2>Escolha os próximos looks</h2><p id="result" aria-live="polite">Catálogo de demonstração</p></div><button class="text-btn" id="show-all" type="button">Ver todas as peças ↗</button></div>
+<div class="products" id="products"></div>
+</section>
+</div>
+</main>
+<footer class="site-footer">
+<div class="footer-landscape" aria-hidden="true"><img src="footer-landscape.webp" width="1376" height="226" alt="" loading="lazy"></div>
+<div class="footer-ground">
+  <div class="wrap footer-grid">
+    <div>
+      <a class="brand" href="#inicio"><img class="brand-mark" src="logo.svg" width="33" height="33" alt=""> moda<strong>infantil</strong></a>
+      <p>Roupas para brincar, passear e aproveitar cada dia.</p>
+    </div>
+    <nav aria-label="Links do rodapé">
+      <h2>Explore a loja</h2>
+      <a href="#categorias">Categorias</a>
+      <a href="#vitrine">Vitrine</a>
+    </nav>
+    <div>
+      <h2>Pedidos pelo WhatsApp</h2>
+      <p>Escolha suas peças e continue pelo WhatsApp a partir da sacola.</p>
+      <button id="footer-bag" class="footer-action" type="button">Abrir sacola <span aria-hidden="true">↗</span></button>
+    </div>
+  </div>
+  <div class="wrap footer-bottom"><span>Moda Infantil</span><a href="#inicio">Voltar ao topo ↑</a></div>
+</div>
+</footer>
+<dialog id="dialog" aria-labelledby="dialog-title"></dialog>
+<p class="sr" role="status" id="announcement"></p>
+<script type="module" src="intro.js"></script>
+<script type="module" src="app.js"></script>
+</body></html>
