@@ -1,4 +1,43 @@
-import { catalog, categories, store } from "./catalog.js";
+import { catalog as demoCatalog, categories, store } from "./catalog.js";
+
+import { connect, mediaUrl, storefrontProduct } from "./backend.js";
+
+let catalog = demoCatalog;
+let usingDemo = true;
+try {
+  const live = await Promise.race([loadStorefront(), new Promise(resolve => setTimeout(resolve, 2500))]);
+  if (live) {
+    catalog = live.products;
+    usingDemo = false;
+    const picture = document.querySelector(".hero-banner picture");
+    if (live.desktop) picture.querySelector("img").src = live.desktop;
+    if (live.mobile) picture.querySelector("source").srcset = live.mobile;
+    if (live.desktop || live.mobile) {
+      picture.querySelector("img").alt = "Banner da Moda Infantil";
+      document.querySelector(".hero-banner").classList.add("custom-hero");
+    }
+  }
+} catch {
+  // Mantém a vitrine de demonstração disponível se a conexão falhar.
+}
+
+async function loadStorefront() {
+  const client = await connect();
+  if (!client) return;
+  const [products, hero] = await Promise.all([
+    client.from("moda_products").select("*").order("id"),
+    client.from("moda_hero").select("desktop,mobile").eq("id", true).single()
+  ]);
+  if (products.error || hero.error) throw new Error("Falha ao carregar a vitrine.");
+  return {
+    products: products.data.map(row => storefrontProduct(client, row)),
+    desktop: mediaUrl(client, hero.data.desktop ?? ""),
+    mobile: mediaUrl(client, hero.data.mobile ?? "")
+  };
+}
+
+const escapeHtml = value => String(value).replace(/[&<>"']/g, character =>
+  ({"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"})[character]);
 
 const byId = id => document.getElementById(id);
 const money = cents => (cents / 100).toLocaleString("pt-BR", {style:"currency", currency:"BRL"});
@@ -47,12 +86,12 @@ function render() {
   }
   positionCloud();
   const products = catalog.filter(item => !category || item.category === category);
-  byId("result").textContent = `${products.length} ${products.length === 1 ? "peça" : "peças"} · Catálogo de demonstração`;
+  byId("result").textContent = `${products.length} ${products.length === 1 ? "peça" : "peças"}${usingDemo ? " · Catálogo de demonstração" : ""}`;
   byId("products").innerHTML = products.map(({id, name, image, price, colorHex, variants}) => `
     <article class="product">
-    <button type="button" class="product-image" data-product="${id}" aria-label="Ver ${name}"><img src="${image}" width="430" height="430" alt="" loading="lazy"></button>
-    <div class="product-body"><p class="color"><i style="--swatch:${colorHex}"></i>${variants[0].color}</p>
-    <h3>${name}</h3><div class="price-row"><strong>${money(price)}</strong><button class="plus" type="button" data-product="${id}" aria-label="Escolher ${name}">+</button></div></div></article>`).join("");
+    <button type="button" class="product-image" data-product="${id}" aria-label="Ver ${escapeHtml(name)}"><img src="${escapeHtml(image)}" width="430" height="430" alt="" loading="lazy"></button>
+    <div class="product-body"><p class="color"><i style="--swatch:${colorHex}"></i>${escapeHtml(variants[0].color)}</p>
+    <h3>${escapeHtml(name)}</h3><div class="price-row"><strong>${money(price)}</strong><button class="plus" type="button" data-product="${id}" aria-label="Escolher ${escapeHtml(name)}">+</button></div></div></article>`).join("");
 }
 
 function openDialog(content) {
@@ -62,10 +101,10 @@ function openDialog(content) {
 
 function showProduct(product) {
   const colors = [...new Set(product.variants.map(variant => variant.color))];
-  openDialog(`<div class="detail"><img src="${product.image}" alt="${product.name}"><div>
-  <h2 id="dialog-title">${product.name}</h2><p><strong>${money(product.price)}</strong></p>
+  openDialog(`<div class="detail"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}"><div>
+  <h2 id="dialog-title">${escapeHtml(product.name)}</h2><p><strong>${money(product.price)}</strong></p>
   <form id="variant-form">
-  <label>Cor<select name="color">${colors.map(color => `<option>${color}</option>`).join("")}</select></label>
+  <label>Cor<select name="color">${colors.map(color => `<option>${escapeHtml(color)}</option>`).join("")}</select></label>
   <label>Tamanho<select name="variant" required></select></label>
   <label>Quantidade<input type="number" name="quantity" min="1" max="99" step="1" value="1" required></label>
   <button class="button">Adicionar à sacola</button>
@@ -74,7 +113,7 @@ function showProduct(product) {
   function sizes() {
     form.elements.variant.innerHTML = '<option value="">Selecione um tamanho</option>' + product.variants
       .filter(variant => variant.color === form.elements.color.value)
-      .map(variant => `<option value="${variant.id}">${variant.size}</option>`).join("");
+      .map(variant => `<option value="${escapeHtml(variant.id)}">${escapeHtml(variant.size)}</option>`).join("");
   }
   sizes();
   form.elements.color.addEventListener("change", sizes);
@@ -97,8 +136,8 @@ function showCart(focusKey) {
   const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
   openDialog(`<h2 id="dialog-title">Sua sacola</h2>${items.length ? `
     <ul class="cart-items">${items.map(({product, variant, id, quantity}) => `<li>
-    <img src="${product.image}" alt="" width="64" height="64"><div><strong>${product.name}</strong><small>${variant.color} · Tam. ${variant.size} · ${money(product.price)}</small>
-    <div class="quantity"><button type="button" data-item="${id}" data-delta="-1" aria-label="Diminuir quantidade de ${product.name}">−</button><span>${quantity}</span><button type="button" data-item="${id}" data-delta="1" aria-label="Aumentar quantidade de ${product.name}" ${quantity === 99 ? "disabled" : ""}>+</button></div></div></li>`).join("")}</ul>
+    <img src="${escapeHtml(product.image)}" alt="" width="64" height="64"><div><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(variant.color)} · Tam. ${escapeHtml(variant.size)} · ${money(product.price)}</small>
+    <div class="quantity"><button type="button" data-item="${escapeHtml(id)}" data-delta="-1" aria-label="Diminuir quantidade de ${escapeHtml(product.name)}">−</button><span>${quantity}</span><button type="button" data-item="${escapeHtml(id)}" data-delta="1" aria-label="Aumentar quantidade de ${escapeHtml(product.name)}" ${quantity === 99 ? "disabled" : ""}>+</button></div></div></li>`).join("")}</ul>
     <p class="total">Total <strong>${money(total)}</strong></p>
     ${phone ? "" : "<p class='demo'>WhatsApp de teste. O link abre a seleção de contato até o número da loja ser configurado.</p>"}
     <a class="button" href="${url}" target="_blank" rel="noopener">Continuar no WhatsApp ↗</a>
@@ -127,7 +166,7 @@ dialog.addEventListener("click", event => {
   cart[item] += Number(delta);
   if (!cart[item]) delete cart[item];
   saveCart();
-  showCart(`[data-item="${item}"][data-delta="${delta}"]`);
+  showCart(`[data-item="${CSS.escape(item)}"][data-delta="${delta}"]`);
 });
 
 byId("category-list").insertAdjacentHTML("beforeend", categories.map(([id, label, icon]) =>
